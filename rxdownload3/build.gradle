@@ -3,11 +3,12 @@ apply plugin: 'kotlin-android'
 apply plugin: 'org.jetbrains.dokka-android'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 26
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
     }
@@ -22,7 +23,7 @@ android {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
-    compile 'com.android.support:appcompat-v7:26.1.0'
+    compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
 
     //retrofit
     compile 'com.squareup.retrofit2:retrofit:2.3.0'
@@ -41,4 +42,4 @@ dokka {
     outputDirectory = "$buildDir/javadoc"
 }
 
-apply from: 'bintray.gradle'
+//apply from: 'bintray.gradle'
