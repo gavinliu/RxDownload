@@ -6,6 +6,12 @@ open class Mission(var url: String) {
     var rangeFlag: Boolean? = null
     var tag: String = url
 
+    var enableNotification: Boolean = DownloadConfig.enableNotification
+
+    constructor(url: String, enableNotification: Boolean) : this(url) {
+        this.enableNotification = enableNotification
+    }
+
     constructor(url: String, saveName: String, savePath: String) : this(url) {
         this.saveName = saveName
         this.savePath = savePath

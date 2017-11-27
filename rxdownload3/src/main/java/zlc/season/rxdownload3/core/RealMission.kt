@@ -34,7 +34,7 @@ class RealMission(val actual: Mission, val semaphore: Semaphore) {
     private lateinit var initMaybe: Maybe<Any>
     private lateinit var downloadFlowable: Flowable<Status>
 
-    private val enableNotification = DownloadConfig.enableNotification
+    private val enableNotification = actual.enableNotification
     private lateinit var notificationManager: NotificationManager
     private lateinit var notificationFactory: NotificationFactory
 

@@ -16,6 +16,10 @@ object RxDownload {
         return create(Mission(url))
     }
 
+    fun create(url: String, enableNotification: Boolean): Flowable<Status> {
+        return create(Mission(url, enableNotification))
+    }
+
     fun create(mission: Mission): Flowable<Status> {
         return downloadCore.create(mission)
     }
