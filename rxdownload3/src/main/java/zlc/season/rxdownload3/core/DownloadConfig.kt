@@ -17,7 +17,7 @@ object DownloadConfig {
     internal var DEBUG = false
 
     internal val DOWNLOADING_FILE_SUFFIX = ".download"
-    internal val TMP_DIR_SUFFIX = ".TMP"
+    internal val TMP_DIR_SUFFIX = ".tmp"
     internal val TMP_FILE_SUFFIX = ".tmp"
 
     internal val RANGE_DOWNLOAD_SIZE: Long = 4 * 1024 * 1024  //4M
