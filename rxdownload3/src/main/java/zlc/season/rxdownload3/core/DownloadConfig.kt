@@ -16,11 +16,11 @@ import zlc.season.rxdownload3.notification.NotificationFactoryImpl
 object DownloadConfig {
     internal var DEBUG = false
 
-    internal val DOWNLOADING_FILE_SUFFIX = ".download"
-    internal val TMP_DIR_SUFFIX = ".tmp"
-    internal val TMP_FILE_SUFFIX = ".tmp"
+    internal const val DOWNLOADING_FILE_SUFFIX = ".download"
+    internal const val TMP_DIR_SUFFIX = ".TMP"
+    internal const val TMP_FILE_SUFFIX = ".tmp"
 
-    internal val RANGE_DOWNLOAD_SIZE: Long = 4 * 1024 * 1024  //4M
+    internal var rangeDownloadSize: Long = 4 * 1024 * 1024  //4M
 
     internal var maxMission = 3
     internal var maxRange = Runtime.getRuntime().availableProcessors() + 1
@@ -39,7 +39,7 @@ object DownloadConfig {
     internal var missionBox: MissionBox = LocalMissionBox()
 
     internal var enableNotification = false
-
+    internal var notificationPeriod = 2L  //2s update once
     internal lateinit var notificationFactory: NotificationFactory
 
     internal var okHttpClientFactory: OkHttpClientFactory = OkHttpClientFactoryImpl()
@@ -54,6 +54,7 @@ object DownloadConfig {
         this.fps = builder.fps
         this.maxMission = builder.maxMission
         this.maxRange = builder.maxRange
+        this.rangeDownloadSize = builder.rangeDownloadSize
         this.defaultSavePath = builder.defaultSavePath
 
         this.autoStart = builder.autoStart
@@ -67,6 +68,7 @@ object DownloadConfig {
 
         this.enableNotification = builder.enableNotification
         this.notificationFactory = builder.notificationFactory
+        this.notificationPeriod = builder.notificationPeriod
 
         this.okHttpClientFactory = builder.okHttpClientFactory
 
@@ -83,12 +85,16 @@ object DownloadConfig {
     class Builder private constructor(val context: Context) {
         internal var maxMission = 3
         internal var maxRange = Runtime.getRuntime().availableProcessors() + 1
+        internal var rangeDownloadSize: Long = 4 * 1024 * 1024  //4M
 
         internal var debug = true
 
         internal var autoStart = false
 
         internal var fps = 30
+
+        internal var notificationPeriod = 2L  //2s update once
+
         internal var defaultSavePath = getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS).path
 
         internal var enableDb = false
@@ -124,13 +130,24 @@ object DownloadConfig {
             return this
         }
 
+        fun setRangeDownloadSize(size: Long): Builder {
+            this.rangeDownloadSize = size
+            return this
+        }
+
         /**
          * Set fps. Default is 30.
          *
          * Note that this value is too large will cause the interface to stuck
          */
+        @Deprecated("This method already deprecated")
         fun setFps(fps: Int): Builder {
             this.fps = fps
+            return this
+        }
+
+        fun setNotificationPeriod(period: Long): Builder {
+            this.notificationPeriod = period
             return this
         }
 

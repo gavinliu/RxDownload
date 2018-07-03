@@ -17,11 +17,13 @@ import zlc.season.rxdownload3.http.HttpCore
 import zlc.season.rxdownload3.notification.NotificationFactory
 import java.io.File
 import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.TimeUnit.SECONDS
 
 
-class RealMission(val actual: Mission, val semaphore: Semaphore, initFlag: Boolean = true) {
+class RealMission(val actual: Mission, private val semaphore: Semaphore,
+                  private val autoStart: Boolean = false, initFlag: Boolean = true) {
     var totalSize = 0L
+
     var status: Status = Normal(Status())
 
     private var semaphoreFlag = false
@@ -34,19 +36,19 @@ class RealMission(val actual: Mission, val semaphore: Semaphore, initFlag: Boole
     private lateinit var downloadFlowable: Flowable<Status>
 
     private val enableNotification = actual.enableNotification
+    private val notificationPeriod = DownloadConfig.notificationPeriod
     private lateinit var notificationManager: NotificationManager
     private lateinit var notificationFactory: NotificationFactory
 
     private val enableDb = DownloadConfig.enableDb
     private lateinit var dbActor: DbActor
 
-    private val autoStart = DownloadConfig.autoStart
-
     private val extensions = mutableListOf<Extension>()
 
     init {
         if (initFlag) {
             init()
+
         }
     }
 
@@ -57,13 +59,14 @@ class RealMission(val actual: Mission, val semaphore: Semaphore, initFlag: Boole
             initMission()
             initExtension()
             initStatus()
+            initNotification()
 
             it.onSuccess(ANY)
         }.subscribeOn(newThread()).doOnError {
             loge("init error!", it)
         }.subscribe {
             emitStatus(status)
-            if (autoStart) {
+            if (autoStart || DownloadConfig.autoStart) {
                 realStart()
             }
         }
@@ -98,6 +101,17 @@ class RealMission(val actual: Mission, val semaphore: Semaphore, initFlag: Boole
         downloadType = generateType()
         if (!enableDb) {
             downloadType?.initStatus()
+        }
+    }
+
+    private fun initNotification() {
+        processor.sample(notificationPeriod, SECONDS, true).subscribe {
+            if (enableNotification) {
+                val notification = notificationFactory.build(DownloadConfig.context!!, this, it)
+                if (notification != null) {
+                    notificationManager.notify(hashCode(), notification)
+                }
+            }
         }
     }
 
@@ -145,9 +159,20 @@ class RealMission(val actual: Mission, val semaphore: Semaphore, initFlag: Boole
 
     fun start(): Maybe<Any> {
         return Maybe.create<Any> {
+            if (alreadyStarted()) {
+                it.onSuccess(ANY)
+                return@create
+            }
             realStart()
             it.onSuccess(ANY)
         }.subscribeOn(newThread())
+    }
+
+    private fun alreadyStarted(): Boolean {
+        if (status is Waiting || status is Downloading) {
+            return true
+        }
+        return false
     }
 
     private fun realStart() {
@@ -241,7 +266,6 @@ class RealMission(val actual: Mission, val semaphore: Semaphore, initFlag: Boole
 
     fun emitStatusWithNotification(status: Status) {
         emitStatus(status)
-        notifyNotification(status)
     }
 
     fun emitStatus(status: Status) {
@@ -250,25 +274,6 @@ class RealMission(val actual: Mission, val semaphore: Semaphore, initFlag: Boole
         if (enableDb) {
             dbActor.updateStatus(this)
         }
-    }
-
-    private fun notifyNotification(status: Status) {
-        if (enableNotification) {
-            delayNotify(status)
-        }
-    }
-
-    private fun delayNotify(status: Status) {
-        //Delay 500 milliseconds to avoid notification not update!!
-        Maybe.just(status)
-                .delaySubscription(500, MILLISECONDS)
-                .subscribeOn(newThread())
-                .subscribe {
-                    val notification = notificationFactory.build(DownloadConfig.context!!, this, it)
-                    if (notification != null) {
-                        notificationManager.notify(hashCode(), notification)
-                    }
-                }
     }
 
     private fun generateType(): DownloadType? {
@@ -292,8 +297,8 @@ class RealMission(val actual: Mission, val semaphore: Semaphore, initFlag: Boole
     }
 
     private fun download(): Flowable<out Status> {
-        return downloadType?.download() ?:
-                Flowable.error(IllegalStateException("Illegal download type"))
+        return downloadType?.download()
+                ?: Flowable.error(IllegalStateException("Illegal download type"))
     }
 
     override fun equals(other: Any?): Boolean {
