@@ -1,11 +1,14 @@
 package zlc.season.rxdownload3.core
 
+import android.support.v4.util.ArrayMap
+
 open class Mission(var url: String) {
     var saveName: String = ""
     var savePath: String = ""
     var rangeFlag: Boolean? = null
     var tag: String = url
     var overwrite: Boolean = false
+    val headers: ArrayMap<String, String> = ArrayMap()
 
     constructor(url: String, saveName: String, savePath: String, overwrite: Boolean = false) : this(url) {
         this.saveName = saveName

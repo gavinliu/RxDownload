@@ -30,7 +30,10 @@ object HttpCore {
         } else {
             mapOf(Pair("Range", range))
         }
-        return api.download(header, mission.actual.url)
+
+        mission.actual.headers.putAll(header)
+
+        return api.download(mission.actual.headers, mission.actual.url)
                 .doOnSuccess {
                     if (!it.isSuccessful) {
                         throw RuntimeException(it.message())
